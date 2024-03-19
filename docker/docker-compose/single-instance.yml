@@ -18,7 +18,8 @@ x-tinode-env-vars: &tinode-env-vars
   "STORE_USE_ADAPTER": "mysql"
   "PPROF_URL": "/pprof"
   # You can provide your own tinode config by setting EXT_CONFIG env var and binding your configuration file to
-  # "EXT_CONFIG": "/etc/tinode/tinode.conf"
+  "EXT_CONFIG": "/etc/tinode/tinode.conf"
+  #"EXT_CONFIG": "tinode.conf"
   "WAIT_FOR": "mysql:3306"
   # Push notifications.
   # Modify as appropriate.
@@ -64,14 +65,18 @@ services:
     container_name: mysql
     restart: always
     # Use your own volume.
-    # volumes:
-    #   - <mysql directory in your file system>:/var/lib/mysql
+    volumes:
+      - ./data:/var/lib/mysql
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=tinode
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 5s
       retries: 10
+
+    ports:
+    - 3309:3306
 
   # Tinode.
   tinode-0:
@@ -79,9 +84,9 @@ services:
     container_name: tinode-0
     hostname: tinode-0
     # You can mount your volumes as necessary:
-    # volumes:
-    #   # E.g. external config (assuming EXT_CONFIG is set).
-    #   - <path to your tinode.conf>:/etc/tinode/tinode.conf
+    volumes:
+      # E.g. external config (assuming EXT_CONFIG is set).
+     - ./tinode.conf:/etc/tinode/tinode.conf
     #   # Logs directory.
     #   - <path to your tinode-0 logs directory>:/var/log
     ports:
@@ -90,20 +95,3 @@ services:
       << : *tinode-env-vars
       "RESET_DB": ${RESET_DB:-false}
       "UPGRADE_DB": ${UPGRADE_DB:-false}
-
-  # Monitoring.
-  # Exporters are paired with tinode instances.
-  exporter-0:
-    container_name: exporter-0
-    hostname: exporter-0
-    depends_on:
-      - tinode-0
-    image: tinode/exporter:latest
-    restart: always
-    ports:
-      - "6222:6222"
-    links:
-      - tinode-0:tinode.host
-    environment:
-      << : *exporter-env-vars
-      "WAIT_FOR": "tinode-0:6060"

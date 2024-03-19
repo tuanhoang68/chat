@@ -33,7 +33,8 @@
     },
     "tags": [
       "email:bob@example.com"
-    ]
+    ],
+    "uid": "Xh4rAb9EaCg"
   },
   "carol": {
     "anon": "N",

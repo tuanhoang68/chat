@@ -11,9 +11,12 @@ dummy_data = {}
 
 app = Flask(__name__)
 
-def parse_secret(ecoded_secret):
-    secret = base64.b64decode(ecoded_secret)
-    return secret.split(':')
+def parse_secret(encoded_secret):
+    print("ENCODE SECRET: ", encoded_secret)
+    decoded_secret = base64.b64decode(encoded_secret).decode('utf-8')
+    print("DECODE SECRET: ", decoded_secret)
+    return decoded_secret.split(':')
+
 
 @app.route('/')
 def index():
@@ -26,9 +29,12 @@ def add():
 
 @app.route('/auth', methods=['POST'])
 def auth():
+    print("---------- AUTH ----------")
     if not request.json:
         return jsonify({'err': 'malformed'})
     uname, password = parse_secret(request.json.get('secret'))
+    print("USERNAME: ", uname)
+    print("PASSWORD: ", password)
     if uname in dummy_data:
         if dummy_data[uname]['password'] != password:
             # Wrong password
@@ -85,6 +91,9 @@ def link():
 
     # Save the link account <-> secret to database.
     uname, password = parse_secret(secret)
+    print("---------- LINK ACCOUNT ----------")
+    print("USERNAME: ", uname)
+    print("PASSWORD: ", password)
     if uname not in dummy_data:
         # Unknown user name
         return jsonify({'err': 'not found'})
@@ -107,7 +116,8 @@ def upd():
 @app.route('/rtagns', methods=['POST'])
 def rtags():
     # Return dummy namespace "rest" and "email", let client check logins by regular expression.
-    return jsonify({'strarr': ['rest', 'email'], 'byteval': base64.b64encode('^[a-z0-9_]{3,8}$')})
+    regex_byte = base64.b64encode(b'^[a-z0-9_]{3,8}$').decode('utf-8')  # Encode bytes and decode to string
+    return jsonify({'strarr': ['rest', 'email'], 'byteval': regex_byte})
 
 @app.errorhandler(404)
 def not_found(error):
